@@ -40,7 +40,7 @@ from apache_beam.utils.annotations import deprecated
 
 # The protobuf library is only used for running on Dataflow.
 try:
-  from google.cloud.proto.pubsub.v1 import pubsub_pb2
+  from google.cloud.pubsub_v1.proto import pubsub_pb2
 except ImportError:
   pubsub_pb2 = None
 
@@ -98,22 +98,28 @@ class PubsubMessage(object):
     attributes = dict((key, msg.attributes[key]) for key in msg.attributes)
     return PubsubMessage(msg.data, attributes)
 
-  def _to_proto_str(self):
-    """Get serialized form of ``PubsubMessage``.
+  def _to_proto(self):
+    """Return a new protobuf of type
+      https://cloud.google.com/pubsub/docs/reference/rpc/google.pubsub.v1#google.pubsub.v1.PubsubMessage
+      containing the payload of this object.
+    """
+    msg = pubsub_pb2.PubsubMessage()
+    if self.data:
+      msg.data = self.data
+    if self.attributes:
+      for key, value in self.attributes.iteritems():
+        msg.attributes[key] = value
+    return msg
 
-    Args:
-      proto_msg: str containing a serialized protobuf.
+  def _to_proto_str(self):
+    """Return a serialized form of this ``PubsubMessage``.
 
     Returns:
       A str containing a serialized protobuf of type
       https://cloud.google.com/pubsub/docs/reference/rpc/google.pubsub.v1#google.pubsub.v1.PubsubMessage
       containing the payload of this object.
     """
-    msg = pubsub_pb2.PubsubMessage()
-    msg.data = self.data
-    for key, value in self.attributes.iteritems():
-      msg.attributes[key] = value
-    return msg.SerializeToString()
+    return self._to_proto().SerializeToString()
 
   @staticmethod
   def _from_message(msg):

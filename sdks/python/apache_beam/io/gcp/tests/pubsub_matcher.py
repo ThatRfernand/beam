@@ -33,7 +33,7 @@ __all__ = ['PubSubMessageMatcher']
 # Protect against environments where pubsub library is not available.
 # pylint: disable=wrong-import-order, wrong-import-position
 try:
-  from google.cloud import pubsub
+  from google.cloud import pubsub_v1 as pubsub
 except ImportError:
   pubsub = None
 # pylint: enable=wrong-import-order, wrong-import-position
@@ -92,11 +92,14 @@ class PubSubMessageMatcher(BaseMatcher):
     return Counter(self.messages) == Counter(self.expected_msg)
 
   def _get_subscription(self):
-    return pubsub.Client(project=self.project).subscription(self.sub_name)
+    client = pubsub.SubscriberClient()
+    topic = client.topic_path(self.project, 'pubsub-matcher')
+    return pubsub.SubscriberClient().create_subscription(self.sub_name, topic)
 
   def _wait_for_messages(self, subscription, expected_num, timeout):
     """Wait for messages from given subscription."""
     logging.debug('Start pulling messages from %s', subscription.full_name)
+    XXX
     total_messages = []
     start_time = time.time()
     while time.time() - start_time <= timeout:

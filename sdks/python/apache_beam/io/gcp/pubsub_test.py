@@ -63,7 +63,7 @@ except ImportError:
 
 # The protobuf library is only used for running on Dataflow.
 try:
-  from google.cloud.proto.pubsub.v1 import pubsub_pb2
+  from google.cloud.pubsub_v1.proto import pubsub_pb2
 except ImportError:
   pubsub_pb2 = None
 
@@ -422,8 +422,11 @@ def create_client_message(data, message_id, attributes, publish_time):
 
   This is what the reader sees.
   """
-  msg = pubsub.message.Message(data, message_id, attributes)
-  msg._service_timestamp = publish_time
+  msg = PubsubMessage(data, attributes)._to_proto()
+  if message_id:
+    msg.message_id = message_id
+  if publish_time:
+    msg.publish_time.FromJsonString(publish_time)
   return msg
 
 
