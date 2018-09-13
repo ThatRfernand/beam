@@ -444,7 +444,7 @@ class _PubSubReadEvaluator(_TransformEvaluator):
             except ValueError as e:
               raise ValueError('Bad timestamp value: %s' % e)
         else:
-          timestamp = Timestamp.from_rfc3339(message.service_timestamp)
+          timestamp = Timestamp.from_rfc3339(message.publish_time.ToJsonString())
 
         return timestamp, parsed_message
 

@@ -43,6 +43,11 @@ DEFAULT_INPUT_NUMBERS = 500
 WAIT_UNTIL_FINISH_DURATION = 3 * 60 * 1000   # in milliseconds
 
 
+def _create_topic(client, project, topic):
+  topic_path = client.topic_path(project, topic)
+  return client.create_topic(topic_path)
+
+
 class StreamingWordCountIT(unittest.TestCase):
 
   def setUp(self):
@@ -51,10 +56,10 @@ class StreamingWordCountIT(unittest.TestCase):
     self.uuid = str(uuid.uuid4())
 
     # Set up PubSub environment.
-    from google.cloud import pubsub
-    self.pubsub_client = pubsub.Client(project=self.project)
-    self.input_topic = self.pubsub_client.topic(INPUT_TOPIC + self.uuid)
-    self.output_topic = self.pubsub_client.topic(OUTPUT_TOPIC + self.uuid)
+    from google.cloud import pubsub_v1 as pubsub
+    self.pubsub_client = pubsub.PublisherClient()
+    self.input_topic = _create_topic(self.project, INPUT_TOPIC + self.uuid)
+    self.output_topic = _create_topic(self.project, OUTPUT_TOPIC + self.uuid)
     self.input_sub = self.input_topic.subscription(INPUT_SUB + self.uuid)
     self.output_sub = self.output_topic.subscription(OUTPUT_SUB + self.uuid)
 
@@ -69,7 +74,7 @@ class StreamingWordCountIT(unittest.TestCase):
     logging.debug('Injecting %d numbers to topic %s',
                   num_messages, topic.full_name)
     for n in range(num_messages):
-      topic.publish(str(n))
+      self.pubsub_client.publish(topic, str(n))
 
   def _cleanup_pubsub(self):
     test_utils.cleanup_subscriptions([self.input_sub, self.output_sub])
